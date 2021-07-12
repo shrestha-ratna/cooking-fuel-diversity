@@ -26,7 +26,7 @@ The data for all 11 districts were downloaded from the **2015 Nepal Earthquake: 
 <br/><br/>
 
 #### Code availability
-R-codes used for data analysis is available at [https://raunakms.github.io/diversity_cooking_fuel](https://raunakms.github.io/diversity_cooking_fuel) and can be downloaded from [https://github.com/raunakms/diversity_cooking_fuel](https://github.com/raunakms/diversity_cooking_fuel)
+R-codes used for data analysis is available at [https://github.com/shrestha-ratna/cooking-fuel-diversity](https://github.com/shrestha-ratna/cooking-fuel-diversity)
 <br/><br/>
 
 #### Citation
