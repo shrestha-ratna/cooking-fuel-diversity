@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
  encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, '06_01_Shannon_Simpson_Index.html'))})
+ output_file=file.path(dirname(input_file), out_dir, '04_01_Shannon_Simpson_Index.html'))})
 ---
 
 
@@ -58,18 +58,14 @@ dat <- dat[-which(rowSums(dat[,5:10]) == 0),]
 head(dat)
 ```
 
-#### Calculate Shannon  Index
+#### Shannon Index: Ethnicity
 ```{r}
 dat$ShannonIndex <- vegan::diversity(x=dat[,5:10], index = "shannon", MARGIN = 1, base = exp(1))
 
 # Get Group Medians
 mu <- plyr::ddply(dat, "Ethnicity", summarise, grp.mean=mean(ShannonIndex), grp.median=median(ShannonIndex), grp.stdev=sd(ShannonIndex))
 mu <- mu[order(mu$grp.median, decreasing=TRUE),]
-
-# Factorize Data
-dat$Ethnicity <- factor(dat$Ethnicity, levels=mu$Ethnicity)
-
-head(dat)
+mu
 ```
 
 #### Plot Shannon Index: by Ethnicity
@@ -118,7 +114,7 @@ pairwise.wilcox.test(x=dat$ShannonIndex, g=dat$Ethnicity, p.adjust.method="bonfe
 ```
 
 
-#### Calculate Simpson  Index
+#### Simpson  Index: Ethnicity
 ```{r}
 dat$SimpsonIndex <- vegan::diversity(x=dat[,5:10], index = "simpson", MARGIN = 1, base = exp(1))
 
@@ -173,4 +169,61 @@ kruskal.test(SimpsonIndex ~ Ethnicity, data=dat)
 
 #### Pairwise Mann-Whitney U (Wilcox rank sum) Test of Ethnicity based on Simpson Indices
 ```{r}
-pairwise.wilcox.test(x=dat$SimpsonIndex, g=dat$Ethnicity, p.adjust.method="bonferroni", paired=FALSE, exact=FALSE)
+pairwise.wilcox.test(x=dat$SimpsonIndex, g=dat$Ethnicity, p.adjust.method="bonferroni",
+paired=FALSE, exact=FALSE)
+```
+
+## Shannon Index: 
+### IncomeGroup
+```{r}
+
+# Get Group Medians
+mu_i <- plyr::ddply(dat, "IncomeGroup", summarise, grp.mean=mean(ShannonIndex), grp.median=median(ShannonIndex), grp.stdev=sd(ShannonIndex))
+mu_i <- mu_i[order(mu_i$grp.median, decreasing=TRUE),]
+mu_i
+```
+
+### EducationLevel
+```{r}
+
+# Get Group Medians
+mu_e <- plyr::ddply(dat, "EducationLevel", summarise, grp.mean=mean(ShannonIndex), grp.median=median(ShannonIndex), grp.stdev=sd(ShannonIndex))
+mu_e <- mu_e[order(mu_e$grp.median, decreasing=TRUE),]
+mu_e
+```
+### GeoRegion
+```{r}
+
+# Get Group Medians
+mu_g <- plyr::ddply(dat, "GeoRegion", summarise, grp.mean=mean(ShannonIndex), grp.median=median(ShannonIndex), grp.stdev=sd(ShannonIndex))
+mu_g <- mu_g[order(mu_g$grp.median, decreasing=TRUE),]
+mu_g
+```
+
+## Simpson  Index: 
+### Income
+```{r}
+
+# Get Group Medians
+su_i <- plyr::ddply(dat, "IncomeGroup", summarise, grp.mean=mean(SimpsonIndex), grp.median=median(SimpsonIndex), grp.stdev=sd(SimpsonIndex))
+su_i <- su_i[order(su_i$grp.median, decreasing=TRUE),]
+su_i
+```
+
+### Education
+```{r}
+
+# Get Group Medians
+su_e <- plyr::ddply(dat, "EducationLevel", summarise, grp.mean=mean(SimpsonIndex), grp.median=median(SimpsonIndex), grp.stdev=sd(SimpsonIndex))
+su_e <- su_e[order(su_e$grp.median, decreasing=TRUE),]
+su_e
+```
+
+### Geo Region
+```{r}
+
+# Get Group Medians
+su_g <- plyr::ddply(dat, "GeoRegion", summarise, grp.mean=mean(SimpsonIndex), grp.median=median(SimpsonIndex), grp.stdev=sd(SimpsonIndex))
+su_g <- su_g[order(su_g$grp.median, decreasing=TRUE),]
+su_g
+```

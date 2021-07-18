@@ -1,12 +1,12 @@
 ---
-title: "Relative Abundance"
+title: "PermANOVA" 
 output: html_document
 
 knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
  encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, '06_02_Ralative_Abundance.html'))})
+ output_file=file.path(dirname(input_file), out_dir, '03_01_permanova.html'))})
 ---
 
 #### Define Libraries
@@ -58,23 +58,24 @@ dat <- dat[-which(rowSums(dat[,5:10]) == 0),]
 head(dat)
 ```
 
-#### Transform Data to Relative Scale (Total Transformation)
+#### Transform Data to Log Scale
 ```{r}
-dmt <- vegan::decostand(dat[,5:10], "total")
-dmt <-  cbind(dat[,-c(5:10)], dmt)
-dmt$Ethnicity <- factor(dmt$Ethnicity, levels=type_eth)
-head(dmt)
+dml <- vegan::decostand(dat[,5:10], "log")
+dml <-  cbind(dat[,-c(5:10)], dml)
+dml$Ethnicity <- factor(dml$Ethnicity, levels=type_eth)
+
+head(dml)
 ```
 
 #### Kruskal-Wallis Test (One-way ANOVA) on Abundance Data
 ```{r}
 list.kw <- list()
-list.kw[[1]] <- kruskal.test(Wood ~ Ethnicity, data=dmt)
-list.kw[[2]] <- kruskal.test(Electricity ~ Ethnicity, data=dmt)
-list.kw[[3]] <- kruskal.test(GobarGas ~ Ethnicity, data=dmt)
-list.kw[[4]] <- kruskal.test(Kerosene ~ Ethnicity, data=dmt)
-list.kw[[5]] <- kruskal.test(LPGas ~ Ethnicity, data=dmt)
-list.kw[[6]] <- kruskal.test(Others ~ Ethnicity, data=dmt)
+list.kw[[1]] <- kruskal.test(Wood ~ Ethnicity, data=dml)
+list.kw[[2]] <- kruskal.test(Electricity ~ Ethnicity, data=dml)
+list.kw[[3]] <- kruskal.test(GobarGas ~ Ethnicity, data=dml)
+list.kw[[4]] <- kruskal.test(Kerosene ~ Ethnicity, data=dml)
+list.kw[[5]] <- kruskal.test(LPGas ~ Ethnicity, data=dml)
+list.kw[[6]] <- kruskal.test(Others ~ Ethnicity, data=dml)
 
 # EXtract Data ---
 list.df <- list()
@@ -92,6 +93,15 @@ head(df)
 # Write Output ---
 file.output <- file.path(dir.output, "stats_abundance_krusalwallis_test.tsv")
 write.table(df, file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+```
+
+#### Transform Data to Relative Scale (Total Transformation)
+```{r}
+dmt <- vegan::decostand(dat[,5:10], "total")
+dmt <-  cbind(dat[,-c(5:10)], dmt)
+dmt$Ethnicity <- factor(dmt$Ethnicity, levels=type_eth)
+
+head(dmt)
 ```
 
 #### Perform Pairwise Wilcoxon Rank Sum Test (Mann-Whitney U Test)
@@ -123,4 +133,66 @@ head(df)
 # Write Output ---
 file.output <- file.path(dir.output, "stats_abundance_Mann–Whitney_test.tsv")
 write.table(df, file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+```
+
+#### Permanova Test Using Euclidean Distance: Model with interaction
+```{r}
+# GET DISTANCE MATRIX ---
+dist_dml <- vegan::vegdist(x=as.matrix(dml[,5:10]), method="euclidean", binary=FALSE, diag=TRUE, upper=TRUE, na.rm=FALSE)
+
+# PERMANOVA TEST ---
+set.seed(12345)
+y_permanova <- vegan::adonis(dist_dml ~ IncomeGroup*Ethnicity + Ethnicity*EducationLevel+ Ethnicity*GeoRegion + IncomeGroup*EducationLevel+EducationLevel*GeoRegion+IncomeGroup*GeoRegion, data=dml, permutations=999, method="euclidean", parallel=4)
+y_permanova
+
+# Write Output ---
+file.output <- file.path(dir.output, "stats_abundance_permanova_1.tsv")
+write.table(as.data.frame(y_permanova$aov.tab), file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+```
+
+#### Permanova Test Using Euclidean Distance: Model without interaction
+```{r}
+# PERMANOVA TEST ---
+set.seed(12345)
+y_permanova <- vegan::adonis(dist_dml ~ IncomeGroup+Ethnicity+EducationLevel+GeoRegion, data=dml, permutations=999, method="euclidean", parallel=4)
+y_permanova
+
+# Write Output ---
+file.output <- file.path(dir.output, "stats_abundance_permanova_2.tsv")
+write.table(as.data.frame(y_permanova$aov.tab), file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+```
+
+#### Post-hoc Test for Permanova
+```{r tidy=TRUE}
+permtst <- RVAideMemoire::pairwise.perm.manova(resp=dist_dml, fact=dml$Ethnicity, 
+                                  test="Pillai", nperm=999, progress=TRUE, p.method="none")
+df <- reshape2::melt(permtst$p.value)
+colnames(df) <- c("Ethnicity1","Ethnicity2","pvalue")
+df <- df[-which(is.na(df$pvalue)),]
+df$pvalue.adj <- p.adjust(p=df$pvalue, method="bonferroni", n=length(df$pvalue))
+
+head(df)
+
+# Write Output ---
+file.output <- file.path(dir.output, "stats_abundance_permanova_posthoc.tsv")
+write.table(df, file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
+```
+
+</br>
+
+
+
+#### Perform Permanova Test: Using Bray-Curtis Distance 
+```{r}
+# GET DISTANCE MATRIX ---
+dist_dml <- vegan::vegdist(x=as.matrix(dml[,5:10]), method="bray", binary=FALSE, diag=TRUE, upper=TRUE, na.rm=FALSE)
+
+# PERMANOVA TEST ---
+set.seed(12345)
+y_permanova <- vegan::adonis(dist_dml ~ IncomeGroup*Ethnicity + Ethnicity*EducationLevel+ Ethnicity*GeoRegion + IncomeGroup*EducationLevel+EducationLevel*GeoRegion+IncomeGroup*GeoRegion, data=dml, permutations=999, method="bray", parallel=4)
+y_permanova
+
+# Write Output ---
+file.output <- file.path(dir.output, "stats_abundance_permanova_braycurtis.tsv")
+write.table(as.data.frame(y_permanova$aov.tab), file.output, sep="\t", row.names=FALSE, col.names=TRUE, quote=FALSE)
 ```

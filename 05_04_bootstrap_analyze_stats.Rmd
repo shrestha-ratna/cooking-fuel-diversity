@@ -1,12 +1,12 @@
 ---
-title: "Analyze Bootstrap Experiment Results"
+title: "Analyze Bootstrap Results"
 output: html_document
 
 knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
  encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, '07_04_bootstrap_analyze_stats.html'))})
+ output_file=file.path(dirname(input_file), out_dir, '05_04_bootstrap_stats.html'))})
 ---
 
 #### Define Libraries
